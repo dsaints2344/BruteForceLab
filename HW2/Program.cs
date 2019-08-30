@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -163,6 +164,7 @@ namespace HW2
     {
         // TODO: Agrega los atributos y metodos que necesites
         List<Task> _selectedTasks = new List<Task>();
+        List<ScheduledTask> _finalScheduledTasks = new List<ScheduledTask>();
 
         public override List<ScheduledTask> Solve(Task[] tasks, int K)
         {
@@ -175,10 +177,20 @@ namespace HW2
             // Complejidad esperada: O(N log N)
             // Valor: 6 puntos
             SelectSmallerTasks(tasks.ToList(), K);
-            foreach (var task in _selectedTasks.OrderByDescending(x => (x.priority / x.duration)))
+            _selectedTasks = _selectedTasks.OrderBy(x => (x.duration / x.priority)).ToList();
+            _finalScheduledTasks.Add(new ScheduledTask(_selectedTasks[0], 0));
+
+            for (int i = 1; i < _selectedTasks.Count; i++)
             {
-                Console.WriteLine(task.id);
+                _finalScheduledTasks.Add(new ScheduledTask(_selectedTasks[i], + _selectedTasks[i - 1].duration +_selectedTasks[i -2].duration));
             }
+
+            foreach (var fianlTask in _finalScheduledTasks)
+            {
+                Console.WriteLine("id: {0}, start_time: {1}",fianlTask.task.id, fianlTask.start_time);
+            }
+
+            
 
             return null;
         }
