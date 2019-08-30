@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,8 +18,8 @@ namespace HW2
             this.duration = duration;
             this.priority = priority;
         }
+        
     }
-
 
     // Esta clase define una tarea agendada.  Tu solucion debe devover una lista de
     // objetos de esta clase
@@ -55,6 +54,7 @@ namespace HW2
     {
         // TODO: Agrega los atributos y metodos que necesites
         List<Task[]> _tasksList = new List<Task[]>();
+        List<ScheduledTask> _scheduledTasks = new List<ScheduledTask>();
 
 
         public void GenerateTaskPermutation(List<Task[]> permutation, int permuteIndex, int k, Task[] lastPermutation, Task[] tasks)
@@ -136,9 +136,16 @@ namespace HW2
             //then discarding the permutations with the biggest costs, leaving in the end one answer
             Task[] tempTasks = new Task[K];
             GenerateTaskPermutation(_tasksList, 0, K, tempTasks, tasks);
-            CalculateFinalPenalty(_tasksList);
+            int counter = 0;
+            int startTimeValue = 0;
+            while (counter < _tasksList[0].Length)
+            {
+                _scheduledTasks.Add(new ScheduledTask(_tasksList[0][counter], startTimeValue));
+                startTimeValue += _tasksList[0][counter].duration;
+                counter++;
+            }
 
-            return null;
+            return _scheduledTasks;
         }
 
         private void CalculateFinalPenalty(List<Task[]> tasksList)
@@ -163,7 +170,7 @@ namespace HW2
     public class MyGreedySolution : Solution
     {
         // TODO: Agrega los atributos y metodos que necesites
-        List<Task> _selectedTasks = new List<Task>();
+        List<KeyValuePair<Task, float>> _selectedTasks = new List<KeyValuePair<Task, float>>();
         List<ScheduledTask> _finalScheduledTasks = new List<ScheduledTask>();
 
         public override List<ScheduledTask> Solve(Task[] tasks, int K)
@@ -176,23 +183,20 @@ namespace HW2
             //    manera descendente, tal como explicamos en clase
             // Complejidad esperada: O(N log N)
             // Valor: 6 puntos
-            SelectSmallerTasks(tasks.ToList(), K);
-            _selectedTasks = _selectedTasks.OrderBy(x => (x.duration / x.priority)).ToList();
-            _finalScheduledTasks.Add(new ScheduledTask(_selectedTasks[0], 0));
+            List<Task> tasksToSelect = new List<Task>(tasks);
+            SelectSmallerTasks(tasksToSelect, K);
+            _selectedTasks.Sort((a, b) => b.Value.CompareTo(a.Value));
 
-            for (int i = 1; i < _selectedTasks.Count; i++)
+            int counter = 0;
+            int startTimeValue = 0;
+            while (counter < _selectedTasks.Count)
             {
-                _finalScheduledTasks.Add(new ScheduledTask(_selectedTasks[i], + _selectedTasks[i - 1].duration +_selectedTasks[i -2].duration));
+                _finalScheduledTasks.Add(new ScheduledTask(_selectedTasks[counter].Key, startTimeValue));
+                startTimeValue += _selectedTasks[counter].Key.duration;
+                counter++;
             }
-
-            foreach (var fianlTask in _finalScheduledTasks)
-            {
-                Console.WriteLine("id: {0}, start_time: {1}",fianlTask.task.id, fianlTask.start_time);
-            }
-
             
-
-            return null;
+            return _finalScheduledTasks;
         }
 
         private void SelectSmallerTasks(List<Task> tasks, int k)
@@ -201,17 +205,31 @@ namespace HW2
             while (counter < k)
             {
                 Task tempTask = tasks[0];
+                float tempReason = (float)tempTask.priority / (float)tempTask.duration;
 
-
-                for (int i = 0; i < tasks.Count; i++)
+                for (int i = 1; i < tasks.Count; i++)
                 {
                     if ((tasks[i].priority * tasks[i].duration) < (tempTask.priority * tempTask.duration))
                     {
                         tempTask = tasks[i];
+                        float priority = tasks[i].priority;
+                        float duration = tasks[i].duration;
+                        tempReason = priority / duration;
+
+                    }
+                    
+                }
+
+                foreach (var item in _selectedTasks)
+                {
+                    if (item.Value.Equals(tempReason))
+                    {
+                        tempReason += (float)0.001;
+                        break;
                     }
                 }
 
-                _selectedTasks.Add(tempTask);
+                _selectedTasks.Add(new KeyValuePair<Task, float>(tempTask,tempReason));
                 tasks.Remove(tempTask);
                 counter++;
             }
@@ -262,25 +280,25 @@ namespace HW2
             }
 
             {
-                //    Console.WriteLine("------------");
-                //    Console.WriteLine("Brute Force:");
-                //    Console.WriteLine("------------");
-                //    Solution sol = new MyBruteForceSolution();
-                //    List<ScheduledTask> result = sol.Solve((Task[])tasks.Clone(), K);
-                //    long penalty = 0;
-                //    foreach (ScheduledTask s in result)
-                //    {
-                //        int end_time = s.start_time + s.task.duration;
-                //        penalty += s.task.priority * end_time;
-                //        Console.WriteLine(
-                //            "Task id {0,2}  priority: {1,2}  duration: {2,3}  " +
-                //            "start: {3,4}  end: {4,4}  penalty: {5,5}",
-                //            s.task.id, s.task.priority, s.task.duration,
-                //            s.start_time, end_time, s.task.priority * end_time
-                //        );
-                //    }
-                //    Console.WriteLine("Total penalty: {0}", penalty);
-                //    Console.WriteLine();
+                Console.WriteLine("------------");
+                Console.WriteLine("Brute Force:");
+                Console.WriteLine("------------");
+                Solution sol = new MyBruteForceSolution();
+                List<ScheduledTask> result = sol.Solve((Task[])tasks.Clone(), K);
+                long penalty = 0;
+                foreach (ScheduledTask s in result)
+                {
+                    int end_time = s.start_time + s.task.duration;
+                    penalty += s.task.priority * end_time;
+                    Console.WriteLine(
+                        "Task id {0,2}  priority: {1,2}  duration: {2,3}  " +
+                        "start: {3,4}  end: {4,4}  penalty: {5,5}",
+                        s.task.id, s.task.priority, s.task.duration,
+                        s.start_time, end_time, s.task.priority * end_time
+                    );
+                }
+                Console.WriteLine("Total penalty: {0}", penalty);
+                Console.WriteLine();
             }
         }
 
