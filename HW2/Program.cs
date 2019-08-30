@@ -149,6 +149,7 @@ namespace HW2
                 {
                     long tempResult = item.priority * item.duration;
                     penalty += tempResult;
+                    Console.WriteLine(item.id);
                 }
             }
 
@@ -161,7 +162,7 @@ namespace HW2
     public class MyGreedySolution : Solution
     {
         // TODO: Agrega los atributos y metodos que necesites
-
+        List<Task> _selectedTasks = new List<Task>();
 
         public override List<ScheduledTask> Solve(Task[] tasks, int K)
         {
@@ -173,9 +174,36 @@ namespace HW2
             //    manera descendente, tal como explicamos en clase
             // Complejidad esperada: O(N log N)
             // Valor: 6 puntos
-
+            SelectSmallerTasks(tasks.ToList(), K);
+            foreach (var task in _selectedTasks.OrderByDescending(x => (x.priority / x.duration)))
+            {
+                Console.WriteLine(task.id);
+            }
 
             return null;
+        }
+
+        private void SelectSmallerTasks(List<Task> tasks, int k)
+        {
+            int counter = 0;
+            while (counter < k)
+            {
+                Task tempTask = tasks[0];
+
+
+                for (int i = 0; i < tasks.Count; i++)
+                {
+                    if ((tasks[i].priority * tasks[i].duration) < (tempTask.priority * tempTask.duration))
+                    {
+                        tempTask = tasks[i];
+                    }
+                }
+
+                _selectedTasks.Add(tempTask);
+                tasks.Remove(tempTask);
+                counter++;
+            }
+
         }
     }
 
@@ -200,32 +228,10 @@ namespace HW2
             int K = 7;
 
             {
-                //Console.WriteLine("-------");
-                //Console.WriteLine("Greedy:");
-                //Console.WriteLine("-------");
-                //Solution sol = new MyGreedySolution();
-                //List<ScheduledTask> result = sol.Solve((Task[])tasks.Clone(), K);
-                //long penalty = 0;
-                //foreach (ScheduledTask s in result)
-                //{
-                //    int end_time = s.start_time + s.task.duration;
-                //    penalty += s.task.priority * end_time;
-                //    Console.WriteLine(
-                //        "Task id {0,2}  priority: {1,2}  duration: {2,3}  " +
-                //        "start: {3,4}  end: {4,4}  penalty: {5,5}",
-                //        s.task.id, s.task.priority, s.task.duration,
-                //        s.start_time, end_time, s.task.priority * end_time
-                //    );
-                //}
-                //Console.WriteLine("Total penalty: {0}", penalty);
-                //Console.WriteLine();
-            }
-
-            {
-                Console.WriteLine("------------");
-                Console.WriteLine("Brute Force:");
-                Console.WriteLine("------------");
-                Solution sol = new MyBruteForceSolution();
+                Console.WriteLine("-------");
+                Console.WriteLine("Greedy:");
+                Console.WriteLine("-------");
+                Solution sol = new MyGreedySolution();
                 List<ScheduledTask> result = sol.Solve((Task[])tasks.Clone(), K);
                 long penalty = 0;
                 foreach (ScheduledTask s in result)
@@ -241,6 +247,28 @@ namespace HW2
                 }
                 Console.WriteLine("Total penalty: {0}", penalty);
                 Console.WriteLine();
+            }
+
+            {
+                //    Console.WriteLine("------------");
+                //    Console.WriteLine("Brute Force:");
+                //    Console.WriteLine("------------");
+                //    Solution sol = new MyBruteForceSolution();
+                //    List<ScheduledTask> result = sol.Solve((Task[])tasks.Clone(), K);
+                //    long penalty = 0;
+                //    foreach (ScheduledTask s in result)
+                //    {
+                //        int end_time = s.start_time + s.task.duration;
+                //        penalty += s.task.priority * end_time;
+                //        Console.WriteLine(
+                //            "Task id {0,2}  priority: {1,2}  duration: {2,3}  " +
+                //            "start: {3,4}  end: {4,4}  penalty: {5,5}",
+                //            s.task.id, s.task.priority, s.task.duration,
+                //            s.start_time, end_time, s.task.priority * end_time
+                //        );
+                //    }
+                //    Console.WriteLine("Total penalty: {0}", penalty);
+                //    Console.WriteLine();
             }
         }
 
